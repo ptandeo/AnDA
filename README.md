@@ -1,5 +1,5 @@
 # DESCRIPTION
-¡AnDA! is a Python library for the Analog Data Assimilation.
+¡AnDA! is a Python library for the Analog Data Assimilation. This fully data-driven approach aims at reconstructing the state of the system without knowing explicitly the dynamical model. Instead, a representative catalog of trajectories of the system is assumed to be available. AnDA combines analog forecasting methods with ensemble data assimilation.
 
 # GETTING STARTED
 A description and a test of the code is given in the ipython notebook "test_AnDA.ipynb". 
