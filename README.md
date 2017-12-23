@@ -11,5 +11,4 @@ Please contact **Pierre Tandeo** (pierre.tandeo@imt-atlantique.fr) in case of bu
 The Matlab code is also available on demand but will not be supported for the future. We advice new users to consider using the AnDA Python library which does not need special Matlab toolbox licences and is used by the authors in their future works.
 
 # CITING
-This Python library is attached to the following publication:
-Lguensat, R., Tandeo, P., Ailliot, P., Pulido, M., & Fablet, R. (2017). The analog data assimilation. *Monthly Weather Review*, 145(10), 4093-4107.
+This Python library is attached to the following publication (http://journals.ametsoc.org/doi/abs/10.1175/MWR-D-16-0441.1): Lguensat, R., Tandeo, P., Ailliot, P., Pulido, M., & Fablet, R. (2017). The analog data assimilation. *Monthly Weather Review*, 145(10), 4093-4107.
