@@ -114,7 +114,7 @@ def AnDA_analog_forecasting(x, AF):
                 #cov_xf = 1.0/(1.0-np.sum(np.power(weights[i_N,:],2)))*np.dot(np.repeat(weights[i_N,:][np.newaxis],len(i_var),0)*E_xf,E_xf.T);
 
             else:
-                print("Error: choose AF.regression between 'locally_constant', 'increment', 'local_linear', 'global_linear' ")
+                print("Error: choose AF.regression between 'locally_constant', 'increment', 'local_linear', 'global_linear', 'local_forest' ")
                 quit()
 
             # select the sampling method
