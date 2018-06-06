@@ -59,7 +59,6 @@ def AnDA_generate_data(GD):
         yo.values[np.ix_(i_t_obs,GD.var_obs)] = yo_tmp[np.ix_(i_t_obs,GD.var_obs)];
         yo.time = xt.time;
        
-
         #generate catalog
         S =  odeint(AnDA_Lorenz_63,S[S.shape[0]-1,:],np.arange(0.01,GD.nb_loop_train+0.000001,GD.dt_integration),args=(GD.parameters.sigma,GD.parameters.rho,GD.parameters.beta));
         T_train = S.shape[0];
@@ -76,7 +75,6 @@ def AnDA_generate_data(GD):
         x0[np.int(np.around(GD.parameters.J/2))] = x0[np.int(np.around(GD.parameters.J/2))] + 0.01;
         S = odeint(AnDA_Lorenz_96,x0,np.arange(0,5+0.000001,GD.dt_integration),args=(GD.parameters.F,GD.parameters.J));
         x0 = S[S.shape[0]-1,:];
-       
 
         # generate true state (xt)
         S = odeint(AnDA_Lorenz_96,x0,np.arange(0.01,GD.nb_loop_test+0.000001,GD.dt_integration),args=(GD.parameters.F,GD.parameters.J));       
@@ -85,7 +83,6 @@ def AnDA_generate_data(GD):
         xt.time = t_xt*GD.dt_integration;
         xt.values = S[t_xt,:];
 
-        
         # generate partial/noisy observations (yo)
         eps = np.random.multivariate_normal(np.zeros(GD.parameters.J),GD.sigma2_obs*np.eye(GD.parameters.J),T_test);
         yo_tmp = S[t_xt,:]+eps[t_xt,:];
@@ -94,7 +91,6 @@ def AnDA_generate_data(GD):
         yo.values = xt.values*np.nan;
         yo.values[np.ix_(i_t_obs,GD.var_obs)] = yo_tmp[np.ix_(i_t_obs,GD.var_obs)];
         yo.time = xt.time;
-        
         
         # generate catalog
         S =  odeint(AnDA_Lorenz_96,S[S.shape[0]-1,:],np.arange(0.01,GD.nb_loop_train+0.000001,GD.dt_integration),args=(GD.parameters.F,GD.parameters.J));        

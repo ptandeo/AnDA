@@ -68,7 +68,7 @@ def AnDA_analog_forecasting(x, AF):
                 E_xf = (xf_tmp[:,i_var]-np.repeat(xf_mean[i_N,i_var][np.newaxis],AF.k,0)).T;               
                 cov_xf = 1.0/(1-np.sum(np.power(weights[i_N,:],2)))*np.dot(np.repeat(weights[i_N,:][np.newaxis],len(i_var),0)*E_xf,E_xf.T);
 
-            elif (AF.regression == 'local_linear'):                
+            elif (AF.regression == 'local_linear'):              
                 # NEW VERSION (USING PCA)
                 # pca with weighted observations
                 mean_x = np.sum(AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var_neighboor)]*np.repeat(weights[i_N,:][np.newaxis].T,len(i_var_neighboor),1),0)
@@ -76,7 +76,6 @@ def AnDA_analog_forecasting(x, AF):
                 analog_centered = analog_centered*np.repeat(np.sqrt(weights[i_N,:])[np.newaxis].T,len(i_var_neighboor),1)
                 U, S, V = np.linalg.svd(analog_centered,full_matrices=False)
                 coeff = V.T[:,0:5];
-                
                 W = np.sqrt(np.diag(weights[i_N,:]));
                 A = np.insert(np.dot(AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var_neighboor)],coeff),0,1,1);
                 Aw = np.dot(W,A);
@@ -91,12 +90,33 @@ def AnDA_analog_forecasting(x, AF):
                 if len(i_var)>1:
                     cov_xf = np.cov(res.T);
                 else:
-                    cov_xf = np.cov(res.T)[np.newaxis][np.newaxis];		
+                    cov_xf = np.cov(res.T)[np.newaxis][np.newaxis];
                 # constant weights for local linear
                 weights[i_N,:] = 1.0/len(weights[i_N,:]);
+
+            elif (AF.regression == 'global_linear'): ### REMARK: USE i_var_neighboor IN THE FUTURE! ####
+                xf_mean[i_N,:] = AF.global_linear.predict(np.array([x[i_N,:]]))
+                if n==1:
+                    cov_xf = np.cov((AF.catalog.successors - AF.global_linear.predict(AF.catalog.analogs)).T)[np.newaxis][np.newaxis]
+                else:
+                    cov_xf = np.cov((AF.catalog.successors - AF.global_linear.predict(AF.catalog.analogs)).T)
+
+            elif (AF.regression == 'local_forest'): ### REMARK: USE i_var_neighboor IN THE FUTURE! ####        
+                xf_mean[i_N,:] = AF.local_forest.predict(np.array([x[i_N,:]]))
+                if n==1:
+                    cov_xf = np.cov(((AF.catalog.successors - np.array([AF.local_forest.predict(AF.catalog.analogs)]).T).T))[np.newaxis][np.newaxis]
+                else:
+                    cov_xf = np.cov((AF.catalog.successors - AF.local_forest.predict(AF.catalog.analogs)).T)
+                # weighted mean and covariance
+                #xf_tmp[:,i_var] = AF.local_forest.predict(AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var)]);
+                #xf_mean[i_N,i_var] = np.sum(xf_tmp[:,i_var]*np.repeat(weights[i_N,:][np.newaxis].T,len(i_var),1),0)
+                #E_xf = (xf_tmp[:,i_var]-np.repeat(xf_mean[i_N,i_var][np.newaxis],AF.k,0)).T;
+                #cov_xf = 1.0/(1.0-np.sum(np.power(weights[i_N,:],2)))*np.dot(np.repeat(weights[i_N,:][np.newaxis],len(i_var),0)*E_xf,E_xf.T);
+
             else:
-                print("Error: choose AF.regression between 'locally_constant', 'increment', 'local_linear' ")
-                quit() 
+                print("Error: choose AF.regression between 'locally_constant', 'increment', 'local_linear', 'global_linear' ")
+                quit()
+
             # select the sampling method
             if (AF.sampling =='gaussian'):
                 # random sampling from the multivariate Gaussian distribution
