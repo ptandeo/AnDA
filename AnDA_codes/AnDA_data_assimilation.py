@@ -41,7 +41,6 @@ def AnDA_data_assimilation(yo, DA):
             # update step (compute forecasts)            
             if k==0:
                 xf = np.random.multivariate_normal(DA.xb, DA.B, DA.N);
-                #xf = np.random.normal(DA.xb, DA.B, DA.N);
             else:
                 xf, m_xa_part_tmp = DA.m(x_hat.part[k-1,:,:]);
                 m_xa_part[k,:,:] = m_xa_part_tmp;         

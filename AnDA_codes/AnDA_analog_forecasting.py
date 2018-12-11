@@ -12,10 +12,14 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KDTree
 from AnDA_codes.AnDA_stat_functions import normalise, mk_stochastic, sample_discrete
+from scipy.linalg import inv
 
 def AnDA_analog_forecasting(x, AF):
     """ Apply the analog method on catalog of historical data to generate forecasts. """
 
+    # parameter used for stability, when inversing Cxx
+    lmbda=1
+    
     # initializations
     N, n = x.shape;
     xf = np.zeros([N,n]);
@@ -37,7 +41,7 @@ def AnDA_analog_forecasting(x, AF):
 
         # find the indices and distances of the k-nearest neighbors (knn)
         kdt = KDTree(AF.catalog.analogs[:,i_var_neighboor], leaf_size=50, metric='euclidean')
-        dist_knn, index_knn = kdt.query(x[:,i_var_neighboor], AF.k)  
+        dist_knn, index_knn = kdt.query(x[:,i_var_neighboor], AF.k)
         
         # normalisation parameter for the kernels
         lambdaa = np.median(dist_knn);
@@ -68,28 +72,40 @@ def AnDA_analog_forecasting(x, AF):
                 E_xf = (xf_tmp[:,i_var]-np.repeat(xf_mean[i_N,i_var][np.newaxis],AF.k,0)).T;               
                 cov_xf = 1.0/(1-np.sum(np.power(weights[i_N,:],2)))*np.dot(np.repeat(weights[i_N,:][np.newaxis],len(i_var),0)*E_xf,E_xf.T);
 
-            elif (AF.regression == 'local_linear'):              
-                # NEW VERSION (USING PCA)
+            elif (AF.regression == 'local_linear'):
+                
                 # pca with weighted observations
                 mean_x = np.sum(AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var_neighboor)]*np.repeat(weights[i_N,:][np.newaxis].T,len(i_var_neighboor),1),0)
                 analog_centered = AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var_neighboor)] - np.repeat(mean_x[np.newaxis],AF.k,0)
                 analog_centered = analog_centered*np.repeat(np.sqrt(weights[i_N,:])[np.newaxis].T,len(i_var_neighboor),1)
                 U, S, V = np.linalg.svd(analog_centered,full_matrices=False)
                 coeff = V.T[:,0:5];
+                
+                # weighted linear regression
                 W = np.sqrt(np.diag(weights[i_N,:]));
                 A = np.insert(np.dot(AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var_neighboor)],coeff),0,1,1);
                 Aw = np.dot(W,A);
-                B = AF.catalog.successors[np.ix_(index_knn[i_N,:],i_var)];			
-                Bw = np.dot(W,B);		
-                mu = np.dot( np.insert(np.dot(x[i_N,i_var_neighboor],coeff),0,1),np.linalg.lstsq(Aw,Bw)[0]);               
-                pred = np.dot( A ,np.linalg.lstsq(A,B)[0]);
+                B = AF.catalog.successors[np.ix_(index_knn[i_N,:],i_var)];
+                Bw = np.dot(W,B);
+                mu = np.dot(np.insert(np.dot(x[i_N,i_var_neighboor],coeff),0,1),np.linalg.lstsq(Aw,Bw)[0]);               
+                pred = np.dot(A,np.linalg.lstsq(A,B)[0]); ### WHY NOT Aw AND Aw,Bw ??? ###
                 res = B-pred;
                 xf_tmp[:,i_var] = np.tile(mu,(AF.k,1))+res;
+                
                 # weighted mean and covariance
                 xf_mean[i_N,i_var] = mu;
                 if len(i_var)>1:
-                    cov_xf = np.cov(res.T);
+                    #cov_xf = np.cov(res.T)
+                    # NEW VERSION (USING WEIGHTS TO COMPUTE cov_xf)
+                    Cxx = np.dot(np.dot(A.T,W),A) 
+                    Cxx2 = np.dot(np.dot(A.T,np.dot(W,W)),A)
+                    cov_xf_res = np.dot(np.dot(res.T,W),res)
+                    inv_Cxx = inv(Cxx+lmbda*np.eye(n+1,n+1)) # use covariance shrinkage
+                    cov_xf_res_unbiased = cov_xf_res/(np.trace(W)-np.trace(Cxx2.dot(inv_Cxx)))
+                    X0 = np.array([np.insert(np.dot(x[i_N,i_var_neighboor],coeff),0,1)])
+                    cov_xf = cov_xf_res_unbiased*(1+np.trace(Cxx2.dot(inv_Cxx).dot(X0.T).dot(X0.dot(inv_Cxx))))
                 else:
+                    ### REMARK: CHANGE THAT IN THE FUTURE! ####
                     cov_xf = np.cov(res.T)[np.newaxis][np.newaxis];
                 # constant weights for local linear
                 weights[i_N,:] = 1.0/len(weights[i_N,:]);
