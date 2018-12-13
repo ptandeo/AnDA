@@ -17,6 +17,9 @@ from scipy.linalg import inv
 def AnDA_analog_forecasting(x, AF):
     """ Apply the analog method on catalog of historical data to generate forecasts. """
 
+    # parameter used to project data in a PCA base
+    nb_comp=5
+    
     # parameter used for stability, when inversing Cxx
     lmbda=1
     
@@ -40,7 +43,10 @@ def AnDA_analog_forecasting(x, AF):
             i_var_neighboor = np.where(AF.neighborhood[int(i_var),:]==1)[0];
 
         # find the indices and distances of the k-nearest neighbors (knn)
+        ### PUT THAT IN AF (SEE JUAN'S CODE) ###
         kdt = KDTree(AF.catalog.analogs[:,i_var_neighboor], leaf_size=50, metric='euclidean')
+        ### PUT THAT IN AF (SEE JUAN'S CODE) ###
+
         dist_knn, index_knn = kdt.query(x[:,i_var_neighboor], AF.k)
         
         # normalisation parameter for the kernels
@@ -79,7 +85,7 @@ def AnDA_analog_forecasting(x, AF):
                 analog_centered = AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var_neighboor)] - np.repeat(mean_x[np.newaxis],AF.k,0)
                 analog_centered = analog_centered*np.repeat(np.sqrt(weights[i_N,:])[np.newaxis].T,len(i_var_neighboor),1)
                 U, S, V = np.linalg.svd(analog_centered,full_matrices=False)
-                coeff = V.T[:,0:5];
+                coeff = V.T[:,0:nb_comp];
                 
                 # weighted linear regression
                 W = np.sqrt(np.diag(weights[i_N,:]));
@@ -100,7 +106,7 @@ def AnDA_analog_forecasting(x, AF):
                     Cxx = np.dot(np.dot(A.T,W),A) 
                     Cxx2 = np.dot(np.dot(A.T,np.dot(W,W)),A)
                     cov_xf_res = np.dot(np.dot(res.T,W),res)
-                    inv_Cxx = inv(Cxx+lmbda*np.eye(n+1,n+1)) # use covariance shrinkage
+                    inv_Cxx = inv(Cxx+lmbda*np.eye(nb_comp+1,nb_comp+1)) # use covariance shrinkage
                     cov_xf_res_unbiased = cov_xf_res/(np.trace(W)-np.trace(Cxx2.dot(inv_Cxx)))
                     X0 = np.array([np.insert(np.dot(x[i_N,i_var_neighboor],coeff),0,1)])
                     cov_xf = cov_xf_res_unbiased*(1+np.trace(Cxx2.dot(inv_Cxx).dot(X0.T).dot(X0.dot(inv_Cxx))))

@@ -31,6 +31,7 @@ def AnDA_data_assimilation(yo, DA):
         part = np.zeros([T,DA.N,n]);
         weights = np.zeros([T,DA.N]);
         values = np.zeros([T,n]);
+        loglik = np.zeros([T]);
         time = yo.time;
 
     if (DA.method =='AnEnKF' or DA.method =='AnEnKS'):
@@ -51,15 +52,21 @@ def AnDA_data_assimilation(yo, DA):
             i_var_obs = np.where(~np.isnan(yo.values[k,:]))[0];            
             if (len(i_var_obs)>0):                
                 eps = np.random.multivariate_normal(np.zeros(len(i_var_obs)),DA.R[np.ix_(i_var_obs,i_var_obs)],DA.N);
-                yf = np.dot(DA.H[i_var_obs,:],xf.T); yf = yf.T;
-                K = np.dot(np.dot(Pf[k,:,:],DA.H[i_var_obs,:].T),np.linalg.inv(np.dot(np.dot(DA.H[i_var_obs,:],Pf[k,:,:]),DA.H[i_var_obs,:].T)+DA.R[np.ix_(i_var_obs,i_var_obs)]));               
-                d = np.repeat(yo.values[k,i_var_obs][np.newaxis],DA.N,0)+eps-yf;
-                x_hat.part[k,:,:] = xf + np.dot(d,K.T);          
+                yf = np.dot(DA.H[i_var_obs,:],xf.T).T
+                SIGMA = np.dot(np.dot(DA.H[i_var_obs,:],Pf[k,:,:]),DA.H[i_var_obs,:].T)+DA.R[np.ix_(i_var_obs,i_var_obs)]
+                SIGMA_INV = np.linalg.inv(SIGMA)
+                K = np.dot(np.dot(Pf[k,:,:],DA.H[i_var_obs,:].T),SIGMA_INV)             
+                d = np.repeat(yo.values[k,i_var_obs][np.newaxis],DA.N,0)+eps-yf
+                x_hat.part[k,:,:] = xf + np.dot(d,K.T)           
+                # compute likelihood
+                innov_ll = np.mean(np.repeat(yo.values[k,i_var_obs][np.newaxis],DA.N,0)-yf,0)
+                loglik = -0.5*(np.dot(np.dot(innov_ll.T,SIGMA_INV),innov_ll))-0.5*(n*np.log(2*np.pi)+np.log(np.linalg.det(SIGMA)))
             else:
-                x_hat.part[k,:,:] = xf;            
+                x_hat.part[k,:,:] = xf;          
             x_hat.weights[k,:] = np.repeat(1.0/DA.N,DA.N);
             x_hat.values[k,:] = np.sum(x_hat.part[k,:,:]*np.repeat(x_hat.weights[k,:][np.newaxis],n,0).T,0);
-            
+            x_hat.loglik[k] = loglik
+
 	# end AnEnKF
 
         if (DA.method == 'AnEnKS'):
