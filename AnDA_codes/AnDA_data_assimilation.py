@@ -3,10 +3,10 @@
 """ AnDA_data_assimilation.py: Apply stochastic and sequential data assimilation technics using model forecasting or analog forecasting. """
 
 __author__ = "Pierre Tandeo and Phi Huynh Viet"
-__version__ = "1.0"
-__date__ = "2016-10-16"
+__version__ = "1.1"
+__date__ = "2019-02-06"
 __maintainer__ = "Pierre Tandeo"
-__email__ = "pierre.tandeo@telecom-bretagne.eu"
+__email__ = "pierre.tandeo@imt-atlantique.fr"
 
 import numpy as np
 from scipy.stats import multivariate_normal
@@ -17,9 +17,9 @@ def AnDA_data_assimilation(yo, DA):
     """ Apply stochastic and sequential data assimilation technics using model forecasting or analog forecasting. """
 
     # dimensions
-    n = len(DA.xb);
-    T = yo.values.shape[0];
-    p = yo.values.shape[1];   
+    n = len(DA.xb)
+    T = yo.values.shape[0]
+    p = yo.values.shape[1] 
 
     # check dimensions
     if p!=DA.R.shape[0]:
@@ -34,6 +34,7 @@ def AnDA_data_assimilation(yo, DA):
         loglik = np.zeros([T]);
         time = yo.time;
 
+    # EnKF and EnKS methods
     if (DA.method =='AnEnKF' or DA.method =='AnEnKS'):
         m_xa_part = np.zeros([T,DA.N,n]);
         xf_part = np.zeros([T,DA.N,n]);
@@ -66,9 +67,9 @@ def AnDA_data_assimilation(yo, DA):
             x_hat.weights[k,:] = np.repeat(1.0/DA.N,DA.N);
             x_hat.values[k,:] = np.sum(x_hat.part[k,:,:]*np.repeat(x_hat.weights[k,:][np.newaxis],n,0).T,0);
             x_hat.loglik[k] = loglik
-
-	# end AnEnKF
-
+        # end AnEnKF
+        
+        # EnKS method
         if (DA.method == 'AnEnKS'):
             for k in tqdm(range(T-1,-1,-1)):           
                 if k==T-1:
@@ -80,10 +81,10 @@ def AnDA_data_assimilation(yo, DA):
                     tmp_2 = m_xa_part_tmp-np.repeat(m_xa_tmp,DA.N,0);                    
                     Ks = 1.0/(DA.N-1)*np.dot(np.dot(tmp_1,tmp_2),inv_using_SVD(Pf[k+1,:,:],0.9999));                    
                     x_hat.part[k,:,:] = x_hat.part[k,:,:]+np.dot(x_hat.part[k+1,:,:]-xf_part[k+1,:,:],Ks.T);
-                x_hat.values[k,:] = np.sum(x_hat.part[k,:,:]*np.repeat(x_hat.weights[k,:][np.newaxis],n,0).T,0);
-               
+                x_hat.values[k,:] = np.sum(x_hat.part[k,:,:]*np.repeat(x_hat.weights[k,:][np.newaxis],n,0).T,0);             
         # end AnEnKS  
     
+    # particle filter method
     elif (DA.method =='AnPF'):
         # special case for k=1
         k=0
@@ -147,11 +148,9 @@ def AnDA_data_assimilation(yo, DA):
             # stock weights
             x_hat.weights[k,:] = weights_tmp_indic;   
         # end AnPF
+    
+    # error
     else :
         print("Error: choose DA.method between 'AnEnKF', 'AnEnKS', 'AnPF' ")
         quit()
-    return x_hat         
-  
-        
-            
-            
+    return x_hat       
