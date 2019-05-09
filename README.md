@@ -1,3 +1,5 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/npsmc/AnDA/master?filepath=https%3A%2F%2Fgithub.com%2Fnpsmc%2FAnDA%2Fblob%2Fmaster%2Ftest_AnDA.ipynb)
+
 # DESCRIPTION
 ¡AnDA! is a Python library for the Analog Data Assimilation. This fully data-driven approach aims at reconstructing the state of the system without knowing explicitly the dynamical model. Instead, a representative catalog of trajectories of the system is assumed to be available. AnDA combines analog forecasting methods with ensemble data assimilation.
 
