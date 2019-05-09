@@ -19,7 +19,7 @@ This Python library is attached to the following publication (http://journals.am
 
 ## Copyright
 
-Copyright © 2019 Pierre Tandeo <pierre.tandeo@imt-atlantique.fr)>.
+Copyright © 2019 Pierre Tandeo <pierre.tandeo@imt-atlantique.fr>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 3 as published by
