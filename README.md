@@ -1,4 +1,4 @@
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/npsmc/AnDA/master?filepath=test_AnDA.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ptandeo/AnDA/master?filepath=test_AnDA.ipynb)
 
 
 # DESCRIPTION
