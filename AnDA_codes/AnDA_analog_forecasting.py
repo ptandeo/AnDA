@@ -27,9 +27,9 @@ def AnDA_analog_forecasting(x, AF):
     while (stop_condition !=1):
 
         # in case of global approach
-        if np.array_equal(AF.neighborhood, np.ones([n,n])):
-            i_var_neighboor = np.arange(0,n)
-            i_var = np.arange(0,n)
+        if np.all(AF.neighborhood == 1):
+            i_var_neighboor = np.arange(n,dtype=np.int64)
+            i_var = np.arange(n, dtype=np.int64)
             stop_condition = 1
 
         # in case of local approach
@@ -86,40 +86,42 @@ def AnDA_analog_forecasting(x, AF):
                 w = weights[i_N,:][np.newaxis]
                 
                 # compute centered weighted mean and weighted covariance
-                Xm = np.array([np.sum(X*np.repeat(w.T,len(i_var_neighboor),1),0)])
-                Xc = X - np.repeat(Xm,np.shape(X)[0],0)
+                Xm = np.sum(X*w.T, axis=0)[np.newaxis]
+                Xc = X - Xm
                 
                 # use SVD decomposition to compute principal components
                 U,S,V = np.linalg.svd(Xc,full_matrices=False)
-                ind = np.where(S/np.sum(S)>0.01)[0] # keep eigen values higher than 1%
+                ind = np.nonzero(S/np.sum(S)>0.01)[0] # keep eigen values higher than 1%
                 
                 # regression on principal components
-                Xr = np.hstack((np.ones([np.shape(X)[0],1]),np.dot(Xc,V.T[:,ind])))
-                Cxx = np.dot(np.repeat(np.array([np.matrix.flatten(w)]).T,np.shape(Xr)[1],1).T*Xr.T,Xr)
-                Cxx2 = np.dot(np.repeat(np.array([np.matrix.flatten(w**2)]).T,np.shape(Xr)[1],1).T*Xr.T,Xr)
-                Cxy = np.dot(np.repeat(np.array([np.matrix.flatten(w)]).T,np.shape(Y)[1],1).T*Y.T,Xr)
+                Xr   = np.c_[np.ones(X.shape[0]), np.dot(Xc,V.T[:,ind])]
+                Cxx  = np.dot(w    * Xr.T,Xr)
+                Cxx2 = np.dot(w**2 * Xr.T,Xr)
+                Cxy  = np.dot(w    * Y.T, Xr)
                 inv_Cxx = inv(Cxx) # in case of error here, increase the number of analogs (AF.k option)
                 beta = np.dot(inv_Cxx,Cxy.T)
                 X0 = x[i_N,i_var_neighboor]-Xm
-                X0r = np.hstack((np.ones([np.shape(X0)[0],1]),np.dot(X0,V.T[:,ind])))
+                X0r = np.c_[np.ones(X0.shape[0]),np.dot(X0,V.T[:,ind])]
                  
                 # weighted mean
                 xf_mean[i_N,i_var] = np.dot(X0r,beta)
                 pred = np.dot(Xr,beta)
                 res = Y-pred
-                xf_tmp[:,i_var] = np.tile(xf_mean[i_N,i_var],(AF.k,1))+res
-                
+                xf_tmp[:,i_var] = xf_mean[i_N,i_var] + res
+    
                 # weigthed covariance
-                cov_xfc = np.dot(np.repeat(np.array([np.matrix.flatten(w)]).T,np.shape(res)[1],1).T*res.T,res)/(1-np.trace(np.dot(Cxx2,inv_Cxx)))
+                cov_xfc = np.dot(w * res.T,res)/(1-np.trace(np.dot(Cxx2,inv_Cxx)))
                 cov_xf = cov_xfc*(1+np.trace(Cxx2@inv_Cxx@X0r.T@X0r@inv_Cxx))
                 
                 # constant weights for local linear
                 weights[i_N,:] = 1.0/len(weights[i_N,:])
+             
                 
             # error
             else:
-                print("Error: choose AF.regression between 'locally_constant', 'increment', 'local_linear' ")
-                quit()
+                raise ValueError("""\
+                    Error: choose AF.regression between \
+                    'locally_constant', 'increment', 'local_linear' """)
             
             '''
             # method "globally-linear" (to finish)
@@ -159,8 +161,9 @@ def AnDA_analog_forecasting(x, AF):
             
             # error
             else:
-                print("Error: choose AF.sampling between 'gaussian', 'multinomial' ")
-                quit()
+                raise ValueError("""\
+                    Error: choose AF.sampling between 'gaussian', 'multinomial' 
+                """)
 
         # stop condition
         if (np.array_equal(i_var,np.array([n-1])) or (len(i_var) == n)):
