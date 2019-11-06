@@ -11,7 +11,7 @@ __email__ = "pierre.tandeo@imt-atlantique.fr"
 import numpy as np
 from sklearn.neighbors import KDTree
 from AnDA_codes.AnDA_stat_functions import mk_stochastic, sample_discrete
-from scipy.linalg import inv
+from numpy.linalg import pinv
 
 def AnDA_analog_forecasting(x, AF):
     """ Apply the analog method on catalog of historical data to generate forecasts. """
@@ -89,19 +89,15 @@ def AnDA_analog_forecasting(x, AF):
                 Xm = np.sum(X*w.T, axis=0)[np.newaxis]
                 Xc = X - Xm
                 
-                # use SVD decomposition to compute principal components
-                U,S,V = np.linalg.svd(Xc,full_matrices=False)
-                ind = np.nonzero(S/np.sum(S)>0.01)[0] # keep eigen values higher than 1%
-                
                 # regression on principal components
-                Xr   = np.c_[np.ones(X.shape[0]), np.dot(Xc,V.T[:,ind])]
+                Xr   = np.c_[np.ones(X.shape[0]), Xc]
                 Cxx  = np.dot(w    * Xr.T,Xr)
                 Cxx2 = np.dot(w**2 * Xr.T,Xr)
                 Cxy  = np.dot(w    * Y.T, Xr)
-                inv_Cxx = inv(Cxx) # in case of error here, increase the number of analogs (AF.k option)
+                inv_Cxx = pinv(Cxx, rcond=0.01) # in case of error here, increase the number of analogs (AF.k option)
                 beta = np.dot(inv_Cxx,Cxy.T)
                 X0 = x[i_N,i_var_neighboor]-Xm
-                X0r = np.c_[np.ones(X0.shape[0]),np.dot(X0,V.T[:,ind])]
+                X0r = np.c_[np.ones(X0.shape[0]),X0]
                  
                 # weighted mean
                 xf_mean[i_N,i_var] = np.dot(X0r,beta)
