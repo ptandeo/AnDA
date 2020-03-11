@@ -47,7 +47,7 @@ def AnDA_analog_forecasting(x, AF):
         if AF.k == 1:
             weights = np.ones([N,1])
         else:
-            weights = mk_stochastic(np.exp(-np.power(dist_knn,2)/lambdaa))
+            weights = mk_stochastic(np.exp(-np.power(dist_knn,2)/lambdaa**2))
         
         # for each member/particle
         for i_N in range(0,N):
