@@ -22,8 +22,7 @@ def AnDA_analog_forecasting(x, AF):
     xf_mean = np.zeros([N,n])
     stop_condition = 0
     i_var = np.array([0])
-    i_var_iter = 0
-
+    
     # local or global analog forecasting
     while (stop_condition !=1):
 
@@ -38,38 +37,18 @@ def AnDA_analog_forecasting(x, AF):
             i_var_neighboor = np.where(AF.neighborhood[int(i_var),:]==1)[0]
             
         # find the indices and distances of the k-nearest neighbors (knn)
-        #kdt = KDTree(AF.catalog.analogs[:,i_var_neighboor], leaf_size=50, metric='euclidean')
-        #dist_knn, index_knn = kdt.query(x[:,i_var_neighboor], AF.k)
-        # find the indices and distances of the k-nearest neighbors (knn)
-        if not AF.initialized :
-           if i_var_iter == 0 : 
-               AF.kdt=list() 
-           AF.kdt.append( KDTree(AF.catalog.analogs[:,i_var_neighboor], leaf_size=50, metric='euclidean') ) #If we are using the global approach we can compute kdt only once.
-        kdt = AF.kdt[i_var_iter]
+        kdt = KDTree(AF.catalog.analogs[:,i_var_neighboor], leaf_size=50, metric='euclidean')
         dist_knn, index_knn = kdt.query(x[:,i_var_neighboor], AF.k)
-      
+        
         # parameter of normalization for the kernels
-        if AF.kernel == 'gaussian':
-            lambdaa = np.median(dist_knn)
+        lambdaa = np.median(dist_knn)
 
-            # compute weights
-            if AF.k == 1:
-                weights = np.ones([N,1])
-            else:
-                
-                weights = mk_stochastic(np.exp(-np.power(dist_knn,2)/lambdaa**2))
-
-        if AF.kernel == 'tricube':
-            # compute weights
-            if AF.k == 1:
-                weights = np.ones([N,1])
-            else:
-                weights = np.ones((N, AF.k))
-                for j in range(weights.shape[0]):
-                    lambdaa = max(dist_knn[j,:].squeeze()) 
-                    weights[j,:] = (1-(dist_knn[j,:].squeeze() /lambdaa )**3)**3;          
-                    weights[j,:]  =  weights[j,:]/np.sum(weights[j,:])
-        # for each member/particle
+        # compute weights
+        if AF.k == 1:
+            weights = np.ones([N,1])
+        else:
+            weights = mk_stochastic(np.exp(-np.power(dist_knn,2)/lambdaa**2))
+        
         # for each member/particle
         for i_N in range(0,N):
             
@@ -184,12 +163,9 @@ def AnDA_analog_forecasting(x, AF):
 
         # stop condition
         if (np.array_equal(i_var,np.array([n-1])) or (len(i_var) == n)):
-            stop_condition = 1
+            stop_condition = 1;
              
         else:
             i_var = i_var + 1
-            i_var_iter = i_var_iter + 1
-
-        AF.initialized = True
             
     return xf, xf_mean; # end
