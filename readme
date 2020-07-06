@@ -1,0 +1,10 @@
+## 28th june 2020 - Valérie
+AnDA_analogs_forecasting function: add the tricube kernel
+test_AnDA_CME.ipynb: add AF.kernel='gaussian' in the AF classes definitions 
+AnDA_optimize_number_analogs: creation
+
+## 29th june 2020 - Valérie
+AnDA_analogs_forecasting function: move the computation of the tree at the first iteration (from Juan's code)
+
+## 29th june 2020 - Pierre T
+AnDA_data_assimilation function: computation of the innovation likelihood at the central location (in the output of the function, we can get the classic likelihood and the central one)

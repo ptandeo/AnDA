@@ -12,6 +12,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from AnDA_codes.AnDA_stat_functions import resampleMultinomial, inv_using_SVD
 from tqdm import tqdm
+import math
 
 def AnDA_data_assimilation(yo, DA):
     """ 
@@ -35,6 +36,7 @@ def AnDA_data_assimilation(yo, DA):
         weights = np.zeros([T,DA.N])
         values = np.zeros([T,n])
         loglik = np.zeros([T])
+        loglik_center = np.zeros([T])
         time = yo.time
 
     # EnKF and EnKS methods
@@ -65,11 +67,15 @@ def AnDA_data_assimilation(yo, DA):
                 # compute likelihood
                 innov_ll = np.mean(yo.values[k,i_var_obs][np.newaxis]-yf,0)
                 loglik = -0.5*(np.dot(np.dot(innov_ll.T,SIGMA_INV),innov_ll))-0.5*(n*np.log(2*np.pi)+np.log(np.linalg.det(SIGMA)))
+                # compute likelihood (central location)
+                i_middle_ll = math.floor(len(innov_ll)/2)+1
+                loglik_center = -0.5*(np.dot(np.dot(innov_ll[i_middle_ll].T,SIGMA_INV[i_middle_ll,i_middle_ll]),innov_ll[i_middle_ll]))-0.5*(n*np.log(2*np.pi)+np.log(SIGMA[i_middle_ll,i_middle_ll]))
             else:
                 x_hat.part[k,:,:] = xf          
             x_hat.weights[k,:] = 1.0/DA.N
             x_hat.values[k,:] = np.sum(x_hat.part[k,:,:]*x_hat.weights[k,:,np.newaxis],0)
             x_hat.loglik[k] = loglik
+            x_hat.loglik_center[k] = loglik_center
         # end AnEnKF
         
         # EnKS method
