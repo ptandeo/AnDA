@@ -41,19 +41,19 @@ def mk_stochastic(T):
         T = T/normaliser.astype(float);
     return T;
 
-def sample_discrete(prob, r, c):
+def sample_discrete(rng, prob, r, c):
     """ Sampling from a non-uniform distribution. """
 
     # this speedup is due to Peter Acklam
     cumprob = np.cumsum(prob);
     n = len(cumprob);
-    R = np.random.rand(r,c);
+    R = rng.rand(r,c);
     M = np.zeros([r,c]);
     for i in range(0,n-1):
         M = M+1*(R>cumprob[i]);    
     return int(M)
 
-def resampleMultinomial(w):
+def resampleMultinomial(rng, w):
     """ Multinomial resampler. """
 
     M = np.max(w.shape);
@@ -62,7 +62,7 @@ def resampleMultinomial(w):
     i = 0;
     indx = [];
     while (i<=(M-1)):
-        sampl = np.random.rand(1,1);
+        sampl = rng.rand(1,1);
         j = 0;
         while (Q[j]<sampl):
             j = j+1;

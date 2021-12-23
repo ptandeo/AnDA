@@ -13,11 +13,13 @@ from scipy.stats import multivariate_normal
 from AnDA_codes.AnDA_stat_functions import resampleMultinomial, inv_using_SVD
 from tqdm import tqdm
 
-def AnDA_data_assimilation(yo, DA):
+def AnDA_data_assimilation(yo, DA, seed=1):
     """ 
     Apply stochastic and sequential data assimilation technics using 
     model forecasting or analog forecasting. 
     """
+
+    rng = np.random.RandomState(seed)
 
     # dimensions
     n = len(DA.xb)
@@ -45,7 +47,7 @@ def AnDA_data_assimilation(yo, DA):
         for k in tqdm(range(0,T)):
             # update step (compute forecasts)            
             if k==0:
-                xf = np.random.multivariate_normal(DA.xb, DA.B, DA.N)
+                xf = rng.multivariate_normal(DA.xb, DA.B, DA.N)
             else:
                 xf, m_xa_part_tmp = DA.m(x_hat.part[k-1,:,:])
                 m_xa_part[k,:,:] = m_xa_part_tmp         
@@ -55,7 +57,7 @@ def AnDA_data_assimilation(yo, DA):
             # analysis step (correct forecasts with observations)          
             i_var_obs = np.where(~np.isnan(yo.values[k,:]))[0]            
             if (len(i_var_obs)>0):                
-                eps = np.random.multivariate_normal(np.zeros(len(i_var_obs)),DA.R[np.ix_(i_var_obs,i_var_obs)],DA.N)
+                eps = rng.multivariate_normal(np.zeros(len(i_var_obs)),DA.R[np.ix_(i_var_obs,i_var_obs)],DA.N)
                 yf = np.dot(DA.H[i_var_obs,:],xf.T).T
                 SIGMA = np.dot(np.dot(DA.H[i_var_obs,:],Pf[k,:,:]),DA.H[i_var_obs,:].T)+DA.R[np.ix_(i_var_obs,i_var_obs)]
                 SIGMA_INV = np.linalg.inv(SIGMA)
@@ -94,7 +96,7 @@ def AnDA_data_assimilation(yo, DA):
         k_count = 0
         m_xa_traj = []
         weights_tmp = np.zeros(DA.N)
-        xf = np.random.multivariate_normal(DA.xb, DA.B, DA.N)
+        xf = rng.multivariate_normal(DA.xb, DA.B, DA.N)
         i_var_obs = np.where(~np.isnan(yo.values[k,:]))[0]
         if (len(i_var_obs)>0):
             # weights
@@ -103,7 +105,7 @@ def AnDA_data_assimilation(yo, DA):
             # normalization
             weights_tmp = weights_tmp/np.sum(weights_tmp)
             # resampling
-            indic = resampleMultinomial(weights_tmp)
+            indic = resampleMultinomial(rng, weights_tmp)
             x_hat.part[k,:,:] = xf[indic,:]         
             weights_tmp_indic = weights_tmp[indic]/sum(weights_tmp[indic])
             x_hat.values[k,:] = sum(xf[indic,:]*weights_tmp_indic[np.newaxis].T,0)
@@ -113,12 +115,12 @@ def AnDA_data_assimilation(yo, DA):
             # weights
             weights_tmp = 1.0/N
             # resampling
-            indic = resampleMultinomial(weights_tmp)
+            indic = resampleMultinomial(rng, weights_tmp)
         x_hat.weights[k,:] = weights_tmp_indic
         
         for k in tqdm(range(1,T)):
             # update step (compute forecasts) and add small Gaussian noise
-            xf, tej = DA.m(x_hat.part[k-1,:,:]) +np.random.multivariate_normal(np.zeros(xf.shape[1]),DA.B/100.0,xf.shape[0])        
+            xf, tej = DA.m(x_hat.part[k-1,:,:]) + rng.multivariate_normal(np.zeros(xf.shape[1]),DA.B/100.0,xf.shape[0])        
             if (k_count<len(m_xa_traj)):
                 m_xa_traj[k_count] = xf
             else:
@@ -133,7 +135,7 @@ def AnDA_data_assimilation(yo, DA):
                 # normalization
                 weights_tmp = weights_tmp/np.sum(weights_tmp)
                 # resampling
-                indic = resampleMultinomial(weights_tmp)            
+                indic = resampleMultinomial(rng, weights_tmp)            
                 # stock results
                 x_hat.part[k-k_count_end:k+1,:,:] = np.asarray(m_xa_traj)[:,indic,:]
                 weights_tmp_indic = weights_tmp[indic]/np.sum(weights_tmp[indic])            
