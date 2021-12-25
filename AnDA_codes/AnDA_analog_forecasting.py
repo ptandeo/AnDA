@@ -13,7 +13,7 @@ from sklearn.neighbors import KDTree
 from AnDA_codes.AnDA_stat_functions import mk_stochastic, sample_discrete
 from numpy.linalg import pinv
 
-def AnDA_analog_forecasting(x, AF, seed=1):
+def AnDA_analog_forecasting(x, AF):
     """ Apply the analog method on catalog of historical data to generate forecasts. """
     
     # initializations
@@ -23,8 +23,6 @@ def AnDA_analog_forecasting(x, AF, seed=1):
     stop_condition = 0
     i_var = np.array([0])
 
-    rng = np.random.RandomState(seed)
-    
     # local or global analog forecasting
     while (stop_condition !=1):
 
@@ -149,12 +147,12 @@ def AnDA_analog_forecasting(x, AF, seed=1):
             # Gaussian sampling
             if (AF.sampling =='gaussian'):
                 # random sampling from the multivariate Gaussian distribution
-                xf[i_N,i_var] = rng.multivariate_normal(xf_mean[i_N,i_var],cov_xf)
+                xf[i_N,i_var] = np.random.multivariate_normal(xf_mean[i_N,i_var],cov_xf)
             
             # Multinomial sampling
             elif (AF.sampling =='multinomial'):
                 # random sampling from the multinomial distribution of the weights
-                i_good = sample_discrete(rng, weights[i_N,:],1,1)
+                i_good = sample_discrete(weights[i_N,:],1,1)
                 xf[i_N,i_var] = xf_tmp[i_good,i_var]
             
             # error

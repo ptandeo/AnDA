@@ -41,13 +41,13 @@ def mk_stochastic(T):
         T = T/normaliser.astype(float);
     return T;
 
-def sample_discrete(rng, prob, r, c):
+def sample_discrete(prob, r, c):
     """ Sampling from a non-uniform distribution. """
 
     # this speedup is due to Peter Acklam
     cumprob = np.cumsum(prob);
     n = len(cumprob);
-    R = rng.rand(r,c);
+    R = np.random.rand(r,c);
     M = np.zeros([r,c]);
     for i in range(0,n-1):
         M = M+1*(R>cumprob[i]);    
