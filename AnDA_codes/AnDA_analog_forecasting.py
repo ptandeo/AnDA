@@ -22,7 +22,7 @@ def AnDA_analog_forecasting(x, AF):
     xf_mean = np.zeros([N,n])
     stop_condition = 0
     i_var = np.array([0])
-    
+
     # local or global analog forecasting
     while (stop_condition !=1):
 
@@ -62,20 +62,20 @@ def AnDA_analog_forecasting(x, AF):
                 xf_tmp[:,i_var] = AF.catalog.successors[np.ix_(index_knn[i_N,:],i_var)]
                 
                 # weighted mean and covariance
-                xf_mean[i_N,i_var] = np.sum(xf_tmp[:,i_var]*np.repeat(weights[i_N,:][np.newaxis].T,len(i_var),1),0)
-                E_xf = (xf_tmp[:,i_var]-np.repeat(xf_mean[i_N,i_var][np.newaxis],AF.k,0)).T
-                cov_xf = 1.0/(1.0-np.sum(np.power(weights[i_N,:],2)))*np.dot(np.repeat(weights[i_N,:][np.newaxis],len(i_var),0)*E_xf,E_xf.T)
+                xf_mean[i_N,i_var] = np.sum(xf_tmp[:,i_var]*weights[i_N,:,np.newaxis],0)
+                E_xf = (xf_tmp[:,i_var]-xf_mean[np.newaxis,i_N,i_var]).T
+                cov_xf = 1.0/(1.0-np.sum(np.power(weights[i_N,:],2)))*np.dot(weights[np.newaxis,i_N,:]*E_xf,E_xf.T)
 
             # method "locally-incremental"
             elif (AF.regression == 'increment'):
                 
                 # compute the analog forecasts
-                xf_tmp[:,i_var] = np.repeat(x[i_N,i_var][np.newaxis],AF.k,0) + AF.catalog.successors[np.ix_(index_knn[i_N,:],i_var)]-AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var)]
+                xf_tmp[:,i_var] = x[np.newaxis,i_N,i_var] + AF.catalog.successors[np.ix_(index_knn[i_N,:],i_var)]-AF.catalog.analogs[np.ix_(index_knn[i_N,:],i_var)]
                 
                 # weighted mean and covariance
-                xf_mean[i_N,i_var] = np.sum(xf_tmp[:,i_var]*np.repeat(weights[i_N,:][np.newaxis].T,len(i_var),1),0)
-                E_xf = (xf_tmp[:,i_var]-np.repeat(xf_mean[i_N,i_var][np.newaxis],AF.k,0)).T
-                cov_xf = 1.0/(1-np.sum(np.power(weights[i_N,:],2)))*np.dot(np.repeat(weights[i_N,:][np.newaxis],len(i_var),0)*E_xf,E_xf.T)
+                xf_mean[i_N,i_var] = np.sum(xf_tmp[:,i_var]*weights[i_N,:,np.newaxis],0)
+                E_xf = (xf_tmp[:,i_var]-xf_mean[np.newaxis,i_N,i_var]).T
+                cov_xf = 1.0/(1-np.sum(np.power(weights[i_N,:],2)))*np.dot(weights[np.newaxis,i_N,:]*E_xf,E_xf.T)
 
             # method "locally-linear"
             elif (AF.regression == 'local_linear'):

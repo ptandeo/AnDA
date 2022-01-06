@@ -18,19 +18,18 @@ def AnDA_model_forecasting(x,GD):
     # initializations
     N, n = x.shape;
     xf = np.zeros([N,n]);
-    xf_mean = np.zeros([N,n]);
 
-    if (GD.model == 'Lorenz_63'):
-        for i_N in range(0,N):
-            S = odeint(AnDA_Lorenz_63,x[i_N,:],np.arange(0,GD.dt_integration+0.000001,GD.dt_integration),args=(GD.parameters.sigma,GD.parameters.rho,GD.parameters.beta));
-            xf[i_N,:] = S[-1,:];
+    fmodel = {}
 
-    elif (GD.model == 'Lorenz_96'):
-        for i_N in range(0,N):
-            S = odeint(AnDA_Lorenz_96,x[i_N,:],np.arange(0,GD.dt_integration+0.000001,GD.dt_integration),args=(GD.parameters.F,GD.parameters.J));
-            xf[i_N,:] = S[-1,:];
+    fmodel['Lorenz_63'] = lambda x0: odeint(AnDA_Lorenz_63,x0,(0,GD.dt_integration),
+                                       args=(GD.parameters.sigma,GD.parameters.rho,GD.parameters.beta))[-1]
 
-    xf_mean = xf;
+    fmodel['Lorenz_96'] = lambda x0: odeint(AnDA_Lorenz_96,x0,(0,GD.dt_integration),
+                                       args=(GD.parameters.F,GD.parameters.J))[-1]
+
+    xf = np.apply_along_axis(fmodel[GD.model], 1, x)
+    xf_mean = np.copy(xf)
+
     return xf, xf_mean
             
             

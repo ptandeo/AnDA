@@ -53,7 +53,7 @@ def sample_discrete(prob, r, c):
         M = M+1*(R>cumprob[i]);    
     return int(M)
 
-def resampleMultinomial(w):
+def resampleMultinomial(rng, w):
     """ Multinomial resampler. """
 
     M = np.max(w.shape);
@@ -62,7 +62,7 @@ def resampleMultinomial(w):
     i = 0;
     indx = [];
     while (i<=(M-1)):
-        sampl = np.random.rand(1,1);
+        sampl = rng.rand(1,1);
         j = 0;
         while (Q[j]<sampl):
             j = j+1;
