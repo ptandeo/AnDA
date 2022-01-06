@@ -38,7 +38,7 @@ def AnDA_generate_data(GD, seed=1):
     
     if (GD.model == 'Lorenz_63'):
     
-        # Got to time = 5 to be in the attractor space
+        # Go to time = 5 to be in the attractor space
         x0 = np.array([8.0,0.0,30.0]);
         S = odeint(AnDA_Lorenz_63,x0,np.arange(0,5+0.000001,GD.dt_integration),args=(GD.parameters.sigma,GD.parameters.rho,GD.parameters.beta));
         x0 = S[S.shape[0]-1,:];
@@ -70,7 +70,7 @@ def AnDA_generate_data(GD, seed=1):
     
     elif (GD.model == 'Lorenz_96'):
         
-        # Got to time = 5 to be in the attractor space
+        # Go to time = 5 to be in the attractor space
         x0 = GD.parameters.F*np.ones(GD.parameters.J);
         x0[np.int(np.around(GD.parameters.J/2))] = x0[np.int(np.around(GD.parameters.J/2))] + 0.01;
         S = odeint(AnDA_Lorenz_96,x0,np.arange(0,5+0.000001,GD.dt_integration),args=(GD.parameters.F,GD.parameters.J));
